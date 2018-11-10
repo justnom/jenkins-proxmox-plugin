@@ -17,6 +17,10 @@
         <f:password />
     </f:entry>
 
+    <f:entry title="${%Connect Timeout (sec)}" field="proxTimeout" help="/plugin/proxmox/help-datacenter-proxmoxtimeout.html">
+        <f:textbox default="60" checkUrl="'${rootURL}/plugin/proxmox/checkStartupWaitingPeriodSeconds?secsValue='+this.value"/>
+    </f:entry>
+
     <f:advanced>
         <f:entry title="${%Ignore SSL certificates}" field="ignoreSSL">
             <f:checkbox default="false" />

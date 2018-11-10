@@ -36,16 +36,18 @@ public class Datacenter extends Cloud {
     private final String realm;
     private final String password; //TODO: Use `Secret` to store the password.
     private final Boolean ignoreSSL;
+    private final int proxTimeout;
     private transient Connector pveConnector;
 
     @DataBoundConstructor
-    public Datacenter(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
+    public Datacenter(String hostname, String username, String realm, String password, Boolean ignoreSSL, int proxTimeout) {
         super("Datacenter(proxmox)");
         this.hostname = hostname;
         this.username = username;
         this.realm = realm;
         this.password = password;
         this.ignoreSSL = ignoreSSL;
+        this.proxTimeout = proxTimeout * 1000;
         this.pveConnector = null;
     }
 
@@ -88,7 +90,7 @@ public class Datacenter extends Cloud {
 
     public Connector proxmoxInstance() {
         if (pveConnector == null) {
-            pveConnector = new Connector(hostname, username, realm, password, ignoreSSL);
+            pveConnector = new Connector(hostname, username, realm, password, ignoreSSL, proxTimeout);
         }
         return pveConnector;
     }
@@ -140,6 +142,7 @@ public class Datacenter extends Cloud {
         private String realm;
         private String password;
         private Boolean ignoreSSL;
+        private int proxTimeout;
 
         public String getDisplayName() {
             return "Proxmox Datacenter";
@@ -152,6 +155,7 @@ public class Datacenter extends Cloud {
             realm = o.getString("realm");
             password = o.getString("password");
             ignoreSSL = o.getBoolean("ignoreSSL");
+            proxTimeout = o.getInt("proxTimeout");
             save();
             return super.configure(req, o);
         }
@@ -183,7 +187,7 @@ public class Datacenter extends Cloud {
 
         public FormValidation doTestConnection (
                 @QueryParameter String hostname, @QueryParameter String username, @QueryParameter String realm,
-                @QueryParameter String password, @QueryParameter Boolean ignoreSSL) {
+                @QueryParameter String password, @QueryParameter Boolean ignoreSSL, @QueryParameter int proxTimeout) {
             try {
                 if (hostname.isEmpty()) {
                     return fieldNotSpecifiedError("Hostname");
@@ -198,7 +202,7 @@ public class Datacenter extends Cloud {
                     return fieldNotSpecifiedError("Password");
                 }
 
-                Connector pveConnector = new Connector(hostname, username, realm, password, ignoreSSL);
+                Connector pveConnector = new Connector(hostname, username, realm, password, ignoreSSL, proxTimeout );
                 pveConnector.login();
                 return FormValidation.ok("Login successful");
 

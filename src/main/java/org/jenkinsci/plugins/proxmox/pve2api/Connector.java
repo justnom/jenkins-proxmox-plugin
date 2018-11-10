@@ -27,6 +27,8 @@ public class Connector {
     protected String password;
     protected Boolean ignoreSSL;
     protected String baseURL;
+    protected int proxTimeout;
+    public static int proxTimeoutDefault = 60 * 1000;
 
     private String authTicket;
     private Date authTicketIssuedTimestamp;
@@ -74,10 +76,10 @@ public class Connector {
     }
 
     public Connector(String hostname, String username, String realm, String password) {
-        this(hostname, username, realm, password, false);
+        this(hostname, username, realm, password, false, Connector.proxTimeoutDefault);
     }
 
-    public Connector(String hostname, String username, String realm, String password, Boolean ignoreSSL) {
+    public Connector(String hostname, String username, String realm, String password, Boolean ignoreSSL, int proxTimeout) {
         //TODO: Split the hostname to check for a port.
         this.hostname = hostname;
         this.port = 8006;
@@ -85,6 +87,7 @@ public class Connector {
         this.realm = realm;
         this.password = password;
         this.ignoreSSL = ignoreSSL;
+        this.proxTimeout = proxTimeout;
         if (ignoreSSL)
             ignoreAllCerts();
         else
@@ -94,7 +97,7 @@ public class Connector {
     }
 
     public void login() throws IOException, LoginException {
-        Resty r = new Resty();
+        Resty r = new Resty(Resty.Option.timeout(proxTimeout));
         JSONResource authTickets = r.json(baseURL + "access/ticket",
                 form("username=" + username + "@" + realm + "&password=" + password));
         try {
@@ -116,7 +119,7 @@ public class Connector {
 
     private Resty authedClient() throws IOException, LoginException {
         checkIfAuthTicketIsValid();
-        Resty r = new Resty();
+        Resty r = new Resty(Resty.Option.timeout(proxTimeout));
         r.withHeader("Cookie", "PVEAuthCookie=" + authTicket);
         r.withHeader("CSRFPreventionToken", csrfPreventionToken);
         return r;
